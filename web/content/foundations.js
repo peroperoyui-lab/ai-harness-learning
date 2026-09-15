@@ -1,0 +1,58 @@
+export default [
+  {
+    id: 'harness', title: '看见模型外面的那台机器', subtitle: 'Model、Agent、Harness 各自负责什么？', minutes: 12, lab: 'trace',
+    goal: '沿着一次 23 × 7 的任务，指出模型决策与程序执行的边界。',
+    sections: [
+      ['先把问题拆开', '一个模型接口通常接收输入并返回输出。把它接进应用后，仍然需要程序保存任务、选择上下文、解析回复、执行工具、处理错误并决定何时停止。本课程把这些围绕模型运转的工程设施统称为 Harness。这个词的边界在不同项目中会有差异，学习重点是职责，而不是争夺一个唯一的定义。'],
+      ['从聊天走到行动', '用户提出“算 23 × 7”，模型可以返回文字，也可以提出 calculator 工具调用。执行乘法的是程序中的函数；模型读取函数返回的 161 后，再生成自然语言。Agent 是这个模型与环境反复交互、推进目标的系统。固定顺序的流程则可以只用普通工作流。'],
+      ['为什么从小系统开始', '本实验把模型替换成确定性脚本，所以每次都能复现同一条路径。只有计算器真正计算。这样可以先检查状态和控制流，再去研究真实模型的不确定性。动画展示可观测事件，不展示或猜测模型的内部思维。'],
+    ],
+    code: [['const task = { prompt: "计算 23 × 7" };', '对象保存本次任务输入。'], ['const state = createRun("success", 3);', '创建状态并限制最多三次模型调用。'], ['const next = advanceRun(state);', '纯函数返回新状态，旧状态仍能用于回看。'], ['console.log(next.events.at(-1));', '读取最新的外部可观测事件。']],
+    source: 'web/lib/engine.js', codeLabel: '调用项目真实函数的片段；需先导入',
+    pitfall: '给模型一句“你能调用工具”，不会自动创建工具、权限系统或执行环境。',
+    challenge: '逐步运行一次，再把场景切换为“参数类型错误”。找出两条路径第一次分叉的位置。',
+    quiz: ['谁真正执行 calculator？', ['模型权重直接执行', 'Harness 调用普通程序函数', '用户提示词执行'], 1, '模型提供调用意图；运行时校验并执行具体函数。'], sources: ['agents'],
+  },
+  {
+    id: 'javascript', title: '读懂工程所需的最小代码', subtitle: '对象、JSON、函数、Promise 与 async / await', minutes: 15, lab: 'schema',
+    goal: '辨认一段工具调用里的数据、控制流和异步边界。',
+    sections: [
+      ['对象与 JSON 不是同一层东西', 'JavaScript 对象是程序内存中的值；JSON 是可传输的文本格式。JSON.stringify 把值变成文本，JSON.parse 把文本读回值。JSON 里的字符串必须用双引号，不能包含注释。把 "23" 写成字符串后，它的类型不会因为看起来像数字而自动变成 number。'],
+      ['函数是可测试的责任单元', 'validateCalculator 只负责检查输入，calculate 负责运算，页面负责显示。这样的拆分让错误可以定位：是 JSON 语法错，还是字段类型错，还是运算实现错？用 return 返回结果，用 throw 表示无法完成；调用方通过 try / catch 把错误转成用户看得懂的反馈。'],
+      ['等待网络，但不冻结页面', 'Promise 表示未来才会完成的操作。async 函数返回 Promise；await 暂停当前异步函数的后续步骤，等待结果，不代表整个浏览器停止工作。真实请求要同时考虑失败、超时和取消。独立任务可以并发，存在先后依赖的任务仍需按顺序等待。'],
+    ],
+    code: [['const raw = \'{"operation":"multiply","a":23,"b":7}\';', '这是字符串，尚不是参数对象。'], ['const args = JSON.parse(raw);', '语法错误会抛出异常。'], ['const errors = validateCalculator(args);', 'JSON 可解析不代表业务参数合法。'], ['if (errors.length) throw new Error(errors.join(";"));', '发现问题就停止，避免错误输入进入工具。'], ['const result = calculate(args);', '纯计算是同步函数，无需 await。'], ['const response = await fetch("/api/demo", options);', '网络调用是异步的；options 由调用方提供。']],
+    source: 'web/lib/calculator.js', codeLabel: '语法教学片段；最后一行仅示意异步调用',
+    pitfall: 'JSON.parse 成功只说明文本格式合法，不保证字段、类型、范围或权限正确。',
+    challenge: '将参数 a 改为 "23"，再改成 23；观察语法合法但类型验证失败的情况。',
+    quiz: ['await 主要表达什么？', ['等待一个异步结果后继续当前函数', '让所有 JavaScript 线程休眠', '自动重试失败的请求'], 0, 'await 管理异步控制流，不会自动加入重试或超时。'], sources: ['async', 'schema'],
+  },
+  {
+    id: 'messages', title: '模型究竟读到了什么', subtitle: '消息角色、指令、Token 与采样参数', minutes: 14, lab: 'context',
+    goal: '把一段对话转换成有角色、长度和来源的消息集合。',
+    sections: [
+      ['对话是带角色的数据', '系统或开发者指令描述应用规则，user 消息表达本次需求，assistant 保存模型输出，tool 保存工具反馈。角色通过协议字段传递；在正文里写“system:”不会改变这条消息的真实角色。不同供应商的角色支持、优先级和序列要求并不完全相同。'],
+      ['Token 是模型的计量单位', '分词器把文本编码成词元编号。一个汉字、英文单词或标点对应多少 Token 取决于分词器，不能用统一的“字数除以四”精确计费。模型在已有上下文条件下预测后续词元；温度等采样参数影响输出分布，不是正确率旋钮，部分模型还限制可用参数。'],
+      ['保存了不等于发送了', '页面可以保存很长的会话，但每次 API 请求只读取实际发送的内容。这里的真实体验默认只发送当前问题，可勾选携带上一组问答。上下文实验使用预设教学单位，不冒充真实分词计数；输出上限也应预留空间。'],
+    ],
+    code: [['const messages = [', '数组保存顺序；顺序也是上下文的一部分。'], ['  { role: "system", content: "简短回答，标明不确定性。" },', '通过结构化字段表达角色。'], ['  { role: "user", content: "什么是工具调用？" }', '这才是本轮问题。'], ['];', '闭合数组。'], ['const request = { model: "your-model", messages };', '请求里没有加入的历史，模型在本次请求中就看不到。']],
+    source: 'web/lib/protocol.js', codeLabel: 'Chat 消息格式教学片段',
+    pitfall: '低温度不保证事实正确；模型输出的自然语言也不能替代外部事实校验。',
+    challenge: '收紧上下文窗口，看看哪些消息先被排除，再解释为什么当前任务和应用规则需要保留。',
+    quiz: ['浏览器保存了 100 条历史，模型会自动看到吗？', ['一定会', '只看实际提供给接口或服务端会话的内容', '只要使用同一 API Key 就会'], 1, '保存机制和上下文构建是两种职责。'], sources: ['chat', 'context'],
+  },
+  {
+    id: 'protocols', title: '给不同模型装上适配器', subtitle: '统一内部输入，显式映射接口协议', minutes: 15, lab: 'protocol',
+    goal: '比较同一任务在 Chat、Responses 与 Messages 中的请求形状。',
+    sections: [
+      ['先定义内部合同', '应用层最好表达“模型名称、消息、输出上限、任务类型”，而不是到处拼供应商字段。适配器把这份内部输入序列化为具体请求，再把响应归一成文本、工具调用、用量和停止原因。这样换协议时不用重写整个学习页面。'],
+      ['相似接口仍有差别', '本项目提供四个预设：Chat modern 使用 max_completion_tokens，Chat compatible 使用 max_tokens，Responses 使用 max_output_tokens，Anthropic Messages 使用 max_tokens 且系统指令单列。路径也不同。兼容服务能支持哪些字段，需要以服务自身文档和返回结果为准。'],
+      ['把模型名和地址分开', 'Base URL 表示服务入口；模型名是入口接受的标识，两者必须显式配置。本站不自动抓取模型列表、不试探大量参数，也不在失败后悄悄切换协议。预览展示与发送端共用的序列化结果，不包含密钥。真实接口响应结构也要验证。'],
+    ],
+    code: [['const input = { protocol: "responses", model: "your-model",', '协议和模型标识由用户明确选择。'], ['  prompt: "解释 Harness", maxTokens: 128, task: "explain" };', '采用小输出预算。'], ['const { path, body } = buildRequest(input);', '统一输入变成协议专用路径和请求体。'], ['// path: /responses', 'Base URL 应在路径前拼接，不重复追加 /v1。'], ['// body.max_output_tokens: 128', '字段名属于适配器，而不是业务页面。']],
+    source: 'web/lib/protocol.js', codeLabel: '调用项目真实序列化函数；需先导入',
+    pitfall: '“OpenAI 兼容”不是所有参数和能力完全一致的保证；400 错误先核对协议与字段。',
+    challenge: '切换四种协议，定位系统指令、消息数组和输出限制字段。再打开工具模式比较工具定义。',
+    quiz: ['协议适配器最适合放在哪一层？', ['每个按钮事件各写一份', 'UI 与供应商网络接口之间', '只写在 README 里'], 1, '隔离外部协议，使内部应用逻辑保持稳定。'], sources: ['chat', 'responses', 'messages'],
+  },
+];
