@@ -6,7 +6,7 @@
 
 不需要 API Key 就能学习全部课程、运行全部实验。可选的真实 API 工作台采用小输出预算、单次手动请求和受限本机中继；学习进度与主动保存的会话留在当前浏览器。
 
-[课程与页面目录](docs/PAGES.md) · [开发规范](docs/DEVELOPMENT.md) · [贡献指南](CONTRIBUTING.md) · [安全边界](SECURITY.md) · [API 说明](docs/API.md) · [测试说明](docs/TESTING.md)
+[课程与页面目录](docs/PAGES.md) · [开发规范](docs/DEVELOPMENT.md) · [贡献指南](CONTRIBUTING.md) · [安全边界](SECURITY.md) · [API 说明](docs/API.md) · [测试说明](docs/TESTING.md) · [本轮审查](docs/AUDIT.md) · [来源复核](docs/SOURCE_REVIEW.md)
 
 ## 立即运行
 
@@ -43,7 +43,7 @@ npm start -- --port=4174
 | 守住安全与预算 | 人工审批、提示注入、隔离与凭证、Token 预算 |
 | 测试并交付项目 | 运行轨迹、评估与回归、部署与开发、完整通路实作 |
 
-每节课包含学习目标、三段概念讲解、逐行注释代码、实现文件链接、常见错误、动手任务、自测题和原始参考资料。**伪代码、项目真实函数片段和概念图式会分别标明。**
+每节课包含学习目标、三段概念讲解、三个可手动切换的预设实例快照、预测题与迁移说明、逐行注释代码、实现文件链接、常见错误、动手任务、自测题和原始参考资料。**伪代码、项目真实函数片段和概念图式会分别标明。**
 
 ### 11 类可操作实验
 
@@ -98,30 +98,36 @@ npm start -- --allow-host=your-provider.example
 
 ```text
 web/
-  index.html, styles.css, favicon.svg    页面入口与原创视觉
+  index.html, styles.css, learning.css   页面入口与原创视觉
+  favicon.svg                           原创站点图标
   app.js, ui.js                        路由、阅读、导航、记录与安全渲染
   labs.js, trace-lab.js                 11 类交互实验
   playground.js                        免密钥／真实 API 体验
-  content/                             六组课程、目录、术语与来源
+  content/                             六组课程、24 个分步实例、目录、术语与来源
+  lesson-guide.js / history-page.js     分步阅读与可恢复的本地记录
   lib/                                 可独立测试的状态机、算法、协议与存储
 server/
   index.mjs                            本机静态服务与 API 边界
   security.mjs                         目标校验、公网地址与来源规则
   upstream.mjs                         有界 HTTPS 请求、响应归一与工具执行
 scripts/                               检查与静态构建
- tests/                                单元、合同、集成与浏览器测试
- docs/                                 页面目录、架构、开发、API 和验证说明
+tests/                                单元、合同、集成与浏览器测试
+docs/                                 页面目录、架构、开发、API 和验证说明
 .github/                               CI、Pages 发布与贡献模板
 ```
 
 运行时零外部包，使用原生 JavaScript ES Modules 与 Node 内置模块。框架升级、供应商 SDK 和大量依赖不会成为初学者读懂核心代码的前置条件。
+
+## 历史会话与继续学习
+
+学习记录支持标题/内容搜索、单会话和全部 JSON 导出、验证后导入及继续问答。恢复会话不会发送模型请求、恢复密钥或继承费用授权；真实连接须重新填写。只有明确勾选后，最近一组标注为简短解释的问答才会进入下一次请求，每条最多 400 字符。旧记录、工具和 JSON 输出保留查看，但不隐式发送。导入最多 2 MiB，同 ID 创建副本，超过总容量会先提示。
 
 ## 开发与测试
 
 ```bash
 npm run dev       # Node watch 模式；前端修改后手动刷新浏览器
 npm run check     # JavaScript 语法、课程结构、引用键与实现文件检查
-npm test          # 无网络、无真实密钥的单元和服务集成测试
+npm test          # 无供应商外网调用、无真实密钥的单元和本机集成测试
 npm run build     # 仅将课程前端生成到 dist/
 npm run verify    # check + test + build
 ```

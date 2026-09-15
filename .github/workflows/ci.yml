@@ -32,6 +32,7 @@ jobs:
         if: always() && matrix.os == 'ubuntu-latest' && matrix.node == '22'
         with:
           name: harness-source
+          include-hidden-files: true
           path: |
             web/
             server/
@@ -43,6 +44,9 @@ jobs:
             CONTRIBUTING.md
             SECURITY.md
             LICENSE
+            AGENTS.md
+            .gitignore
+            .github/
           retention-days: 7
   browser:
     runs-on: ubuntu-latest

@@ -9,13 +9,15 @@
 | `#/` | 首页、学习进度、六阶段课程卡、实验入口 | `web/app.js`、`web/styles.css` |
 | `#/labs` | 11 类本地实验总览 | `web/app.js`、`web/content/course.js` |
 | `#/playground` | 免密钥范例、真实 API 连接与单次交互 | `web/playground.js`、`server/` |
-| `#/history` | 运行轨迹、检查点、会话查看、导出与删除 | `web/app.js`、`web/lib/storage.js` |
+| `#/history` | 轨迹查看、搜索、导入导出、删除与继续会话 | `web/history-page.js`、`web/lib/history.js`、`web/lib/storage.js` |
 | `#/glossary` | 41 条术语的中英文搜索 | `web/app.js`、`web/content/course.js` |
 | `#/sources` | 官方来源、开源与许可声明 | `web/app.js`、`web/content/course.js` |
 
+`#/playground?session=<id>` 恢复本地保存的问答；只读轨迹和检查点不变成可发送的聊天。恢复不发送模型请求、不带回密钥或服务配置，默认不携带历史。
+
 ## 全部课程
 
-所有课程共用 `lessonPage()` 的阅读模板。修正文句优先修改对应内容文件，不必改路由或服务端。
+所有课程共用 `lessonPage()` 的阅读模板，每课增加三步预设实例、预测题与迁移说明。分步数据在 `web/content/walkthroughs.js`，显示组件在 `web/lesson-guide.js`；它们不执行代码、不请求模型。修正文句优先修改对应内容文件，不必改路由或服务端。
 
 | 序号 | 路由 | 课程 | 内容文件 | 关联实验 |
 | --- | --- | --- | --- | --- |
@@ -66,14 +68,14 @@
 
 ## 按修改目的找文件
 
-- **首页、导航、阅读页、历史页：**`web/app.js`。
-- **整体颜色、排版、小屏断点：**`web/styles.css`；共享图标与转义：`web/ui.js`。
+- **首页、导航、阅读模板：**`web/app.js`；历史页：`web/history-page.js`；分步实例：`web/lesson-guide.js`。
+- **整体颜色、排版、小屏断点：**`web/styles.css`；分步实例/记录页样式：`web/learning.css`；共享图标与转义：`web/ui.js`。
 - **概念、题目、来源、术语：**`web/content/`。
 - **工具与计算结果错误：**`web/lib/calculator.js`、`web/lib/protocol.js` 的工具合同、相应测试。
 - **状态错误、轮数上限、审批绕过：**`web/lib/engine.js`、`web/trace-lab.js`。
 - **真实协议字段或用量显示：**`web/lib/protocol.js`、`server/upstream.mjs`、`web/playground.js`。
 - **网络、目标主机、Origin、预算或超时：**`server/security.mjs`、`server/index.mjs`。
-- **历史保存、大小与版本：**`web/lib/storage.js`。
+- **历史保存、大小与版本：**`web/lib/storage.js`；导入、ID 合并和可发送问答：`web/lib/history.js`。
 - **测试和静态打包：**`tests/`、`scripts/`、`.github/workflows/`。
 
 未知路由显示 404 页面。更改已有课程 ID 属于破坏链接的行为，应提供迁移或重定向，而不是直接删除旧入口。

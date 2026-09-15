@@ -9,7 +9,7 @@ export default [
     code: [['if (policy.requiresApproval(call)) {', '伪代码：独立策略层判断动作。'], ['  state.status = "awaiting_approval";', '执行暂停，不只是页面弹窗。'], ['  const decision = await askUser(call);', '显示具体动作与参数。'], ['  if (decision !== "approve") return denied();', '未明确批准就不执行。'], ['}', '批准后仍需确认参数未变化。'], ['return execute(call);', '最后才进入工具执行。']],
     source: 'web/lib/engine.js', codeLabel: '权限控制伪代码；本站状态机有实际审批分支',
     pitfall: '“允许所有后续操作”的笼统开关容易超出用户实际意图。', challenge: '选择等待人工批准场景，自动运行到暂停，先拒绝一次，再重置并批准一次。比较执行日志。',
-    quiz: ['用户拒绝后，正确的下一步是？', ['更换工具完成相同动作', '进入拒绝终态，不执行该动作', '持续弹窗直到同意'], 1, '拒绝应被运行时尊重。'], sources: ['owasp'],
+    quiz: ['用户拒绝后，正确的下一步是？', ['更换工具完成相同动作', '进入拒绝终态，不执行该动作', '持续弹窗直到同意'], 1, '拒绝是正常终态；运行时应停止该动作，不能换工具绕过这次决定。'], sources: ['owasp'],
   },
   {
     id: 'injection', title: '当资料试图变成指令', subtitle: '提示注入、信任边界与独立策略', minutes: 17, lab: 'safety', goal: '观察可疑文本检测和执行权限控制之间的差别。',
