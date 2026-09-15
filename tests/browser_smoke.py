@@ -160,7 +160,7 @@ try:
         visit("/history")
         assert page.locator(".history-card").count() >= 3
         # Resume the actual persisted transcript: no credentials, auto-send or implicit context.
-        page.locator("#history-search").fill("真实")
+        page.locator("#history-search").fill("mock result")
         expect(page.locator(".history-card")).to_have_count(1)
         before_resume = page.evaluate("JSON.parse(localStorage.getItem('harness-lab:v1')).sessions.length")
         page.locator("[data-resume]").click()
