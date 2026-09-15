@@ -10,7 +10,7 @@ export function latestExplanationPair(messages) {
 }
 export function canResume(record) {
   return Boolean(record && Array.isArray(record.messages) && record.messages.length &&
-    record.messages.every(m => ['user', 'assistant'].includes(m.role)));
+    record.messages.every(m => m && ['user', 'assistant'].includes(m.role) && typeof m.content === 'string'));
 }
 /** Reject unknown versions instead of silently resetting the learner's current data. */
 export function parseHistoryImport(text) {

@@ -20,7 +20,11 @@ export function createStore(storage, onFailure = () => {}) {
       try { storage.setItem(KEY, JSON.stringify(state)); } catch { onFailure('浏览器存储不可用或已满；本次记录仅保留在内存。'); }
       return structuredClone(state);
     },
-    clear() { state = EMPTY(); try { storage.removeItem(KEY); } catch { onFailure('浏览器拒绝清除存储；请在浏览器设置中清理本站数据。'); } },
+    clear() {
+      state = EMPTY();
+      try { storage.removeItem(KEY); return true; }
+      catch { onFailure('浏览器拒绝清除存储；请在浏览器设置中清理本站数据。'); return false; }
+    },
   };
 }
 export function redactExact(text, secret) {

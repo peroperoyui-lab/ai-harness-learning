@@ -27,7 +27,7 @@ export function mountHistory(root, { getState, setState, clearState, notify, onC
   $('history-search').oninput = draw;
   $('export-history').onclick = () => downloadJSON(getState(), 'harness-learning-history.json');
   $('clear-history').onclick = () => {
-    if (confirm('清除课程进度和所有学习会话？此操作无法撤销。')) { clearState(); onChange(); draw(); notify('本站学习数据已清除。'); }
+    if (confirm('清除课程进度和所有学习会话？此操作无法撤销。')) { const cleared = clearState(); onChange(); draw(); if (cleared) notify('本站学习数据已清除。'); }
   };
   $('history-import').onchange = async event => {
     const file = event.target.files?.[0];

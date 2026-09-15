@@ -52,7 +52,7 @@ export function mountPlayground(root, { saveSession, notify, initialSession }) {
     previousPair = mode === 'live' ? latestExplanationPair(messages) : []; preview();
   }
   function changeMode(next) {
-    if (busy || next === 'live' && !config?.relay) return;
+    if (busy || next === mode || next === 'live' && !config?.relay) return;
     mode = next; $('live-settings').hidden = next !== 'live';
     root.querySelectorAll('[data-mode]').forEach(button => { button.classList.toggle('active', button.dataset.mode === mode); });
     $('mode-badge').textContent = mode === 'simulation' ? '本地演示 · 0 Token' : '真实 API · 手动触发';

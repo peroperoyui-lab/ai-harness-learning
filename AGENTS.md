@@ -16,3 +16,11 @@ Read README.md, docs/DEVELOPMENT.md and docs/PAGES.md before editing. This is th
 Run `npm run verify`. For UI changes run `python tests/browser_smoke.py` after installing the optional dependencies in docs/TESTING.md. No test needs a real provider key. Report unavailable checks explicitly; local mock coverage does not establish compatibility with every live model.
 
 Keep lesson IDs stable. Update docs/PAGES.md for routes/files; update docs/API.md and SECURITY.md for network/data-flow changes. Describe what changed, evidence, remaining limits and any externally reviewed sources in the PR. Do not overwrite simultaneous work; inspect the target branch before publishing.
+
+## Canonical branch after consolidation
+
+Keep `main` as the only long-lived implementation. Temporary contribution branches
+are removed after merge and verification. Re-read the remote head before writing;
+never overwrite concurrent work or recreate the earlier standalone eight-lesson app.
+For final UI regressions also run `python tests/final_browser.py`.
+See `docs/FINAL_REVIEW.md` for the consolidation scope and verification boundaries.
