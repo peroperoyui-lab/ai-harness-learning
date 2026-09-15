@@ -32,7 +32,7 @@ export const sources = {
   chat: ['OpenAI · Chat API reference', 'https://developers.openai.com/api/reference/resources/chat', '消息与工具调用的接口字段；具体模型能力以服务文档为准。'],
   responses: ['OpenAI · Responses API reference', 'https://platform.openai.com/docs/api-reference/responses', 'Responses 请求、输出与用量字段。'],
   messages: ['Anthropic · Create a Message', 'https://platform.claude.com/docs/en/api/messages/create', 'Messages 协议及工具内容块。'],
-  mcp: ['MCP · Architecture overview', 'https://modelcontextprotocol.io/docs/learn/architecture', 'Host、Client、Server 与协议能力；注意规范版本。'],
+  mcp: ['MCP · Architecture overview', 'https://modelcontextprotocol.io/docs/2026-07-28/learn/architecture', 'Host、Client、Server 与协议能力；注意规范版本。'],
   skills: ['Agent Skills · Overview', 'https://agentskills.io/home', '技能包和按需加载的标准化说明。'],
   async: ['MDN · Introducing asynchronous JavaScript', 'https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Async_JS/Introducing', '异步操作与 JavaScript 控制流。'],
   schema: ['JSON Schema · Getting started', 'https://json-schema.org/learn/getting-started-step-by-step', '对象结构与字段约束；本站验证器只针对固定计算器。'],

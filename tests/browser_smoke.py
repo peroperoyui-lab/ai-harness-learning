@@ -53,6 +53,18 @@ try:
             visit(route)
             assert "这条学习路径还不存在" not in page.locator("#main").inner_text(), route
             no_overflow()
+            if route.startswith("/learn/"):
+                expect(page.locator("[data-guide-step]")).to_have_count(3)
+                expect(page.locator("#guide-position")).to_have_text("1 / 3")
+                expect(page.locator("#guide-back")).to_be_disabled()
+                page.locator("#guide-next").click()
+                expect(page.locator("#guide-position")).to_have_text("2 / 3")
+                page.locator('[data-guide-step="2"]').click()
+                expect(page.locator("#guide-next")).to_be_disabled()
+                page.locator("#guide-reveal").click()
+                expect(page.locator("#guide-answer")).to_be_visible()
+                expect(page.locator("#guide-reveal")).to_have_attribute("aria-expanded", "true")
+                assert len(page.locator("#guide-answer").inner_text()) > 10
         visit("/learn/harness")
         page.locator('[data-answer="1"]').click()
         expect(page.locator("#quiz-feedback")).to_contain_text("答对了")
@@ -147,6 +159,54 @@ try:
         page.screenshot(path=str(OUT / "playground-desktop.png"), full_page=True)
         visit("/history")
         assert page.locator(".history-card").count() >= 3
+        # Resume the actual persisted transcript: no credentials, auto-send or implicit context.
+        page.locator("#history-search").fill("mock result")
+        expect(page.locator(".history-card")).to_have_count(1)
+        before_resume = page.evaluate("JSON.parse(localStorage.getItem('harness-lab:v1')).sessions.length")
+        page.locator("[data-resume]").click()
+        expect(page.locator("#chat-messages")).to_contain_text("[REDACTED]")
+        expect(page.locator("#api-key")).to_have_value("")
+        expect(page.locator("#api-model")).to_have_value("")
+        expect(page.locator("#carry-history")).not_to_be_checked()
+        expect(page.locator("#api-consent")).not_to_be_checked()
+        assert len(captured) == 1
+        page.locator("#api-model").fill("test-model")
+        page.locator("#api-key").fill(fake_key)
+        page.locator("#carry-history").check()
+        page.locator("#api-consent").check()
+        page.locator("#persist-chat").check()
+        page.locator("#chat-prompt").fill("继续解释上下文")
+        page.locator("#chat-send").click()
+        expect(page.locator("#chat-messages .chat-message")).to_have_count(4)
+        assert len(captured) == 2
+        assert [m["role"] for m in captured[1]["history"]] == ["user", "assistant"]
+        assert all(len(m["content"]) <= 400 for m in captured[1]["history"])
+        assert fake_key not in json.dumps(captured[1]["history"])
+        assert page.evaluate("JSON.parse(localStorage.getItem('harness-lab:v1')).sessions.length") == before_resume
+        page.reload()
+        expect(page.locator("#chat-messages .chat-message")).to_have_count(4)
+        expect(page.locator("#api-key")).to_have_value("")
+        expect(page.locator("#carry-history")).not_to_be_checked()
+        assert len(captured) == 2
+        visit("/history")
+        # Export, import collision as a copy, invalid-format error and search.
+        with page.expect_download() as download_info:
+            page.locator("#export-history").click()
+        downloaded = json.loads(pathlib.Path(download_info.value.path()).read_text())
+        assert downloaded["version"] == 1
+        assert fake_key not in json.dumps(downloaded)
+        count_before = page.locator(".history-card").count()
+        one = {"version": 1, "completed": [], "sessions": [downloaded["sessions"][0]]}
+        page.once("dialog", lambda dialog: dialog.accept())
+        page.locator("#history-import").set_input_files({"name":"lesson.json", "mimeType":"application/json", "buffer":json.dumps(one).encode()})
+        expect(page.locator("#history-notice")).to_contain_text("导入完成")
+        expect(page.locator(".history-card")).to_have_count(count_before + 1)
+        ids = page.evaluate("JSON.parse(localStorage.getItem('harness-lab:v1')).sessions.map(s=>s.id)")
+        assert len(ids) == len(set(ids))
+        page.locator("#history-import").set_input_files({"name":"invalid.json", "mimeType":"application/json", "buffer":b'{"version":99}'})
+        expect(page.locator("#history-notice")).to_contain_text("不支持此文件格式")
+        expect(page.locator(".history-card")).to_have_count(count_before + 1)
+        assert len(captured) == 2
         visit("/playground")
         page.locator('[data-mode="live"]').click()
         expect(page.locator("#api-key")).to_have_value("")
@@ -169,7 +229,7 @@ try:
         expect(page.locator("#sidebar")).not_to_have_class("sidebar open")
         assert not errors, errors
         assert not external_requests, external_requests
-        (OUT / "browser-report.json").write_text(json.dumps({"status": "passed", "routes_checked": len(routes) + 1, "viewports": ["1440x1000", "390x844"], "live_api": "mocked, no provider request", "page_errors": errors, "external_requests": external_requests}, ensure_ascii=False, indent=2), encoding="utf-8")
+        (OUT / "browser-report.json").write_text(json.dumps({"status": "passed", "routes_checked": len(routes) + 1, "viewports": ["1440x1000", "390x844"], "walkthroughs_checked": len(catalog["lessons"]), "session_resume": "reload, explicit context, import/export and collision checked", "live_api": "mocked, no provider request", "page_errors": errors, "external_requests": external_requests}, ensure_ascii=False, indent=2), encoding="utf-8")
         browser.close()
         print(f"PASS: {len(routes)+1} routes; desktop/mobile; labs, persistence, XSS text rendering; mocked live UI; zero external requests.")
 finally:

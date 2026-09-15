@@ -6,7 +6,7 @@ export function sanitizeState(raw) {
   const completed = Array.isArray(raw.completed) ? [...new Set(raw.completed.filter(x => typeof x === 'string' && /^[a-z-]{1,40}$/.test(x)))].slice(0, 100) : [];
   const sessions = Array.isArray(raw.sessions) ? raw.sessions.slice(0, 20).filter(s => s && typeof s.id === 'string' && Array.isArray(s.messages)).map(s => ({
     id: s.id.slice(0, 80), title: String(s.title || '学习会话').slice(0, 80), mode: s.mode === 'live' ? 'live' : 'simulation', date: typeof s.date === 'string' ? s.date.slice(0, 40) : '',
-    messages: s.messages.slice(-40).filter(m => m && ['user', 'assistant', 'event'].includes(m.role) && typeof m.content === 'string').map(m => ({ role: m.role, content: m.content.slice(0, 12000) })),
+    messages: s.messages.slice(-40).filter(m => m && ['user', 'assistant', 'event'].includes(m.role) && typeof m.content === 'string').map(m => ({ role: m.role, content: m.content.slice(0, 12000), ...(['explain', 'json', 'tool'].includes(m.task) ? { task: m.task } : {}) })),
   })) : [];
   return { version: 1, completed, sessions };
 }
