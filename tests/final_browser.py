@@ -43,12 +43,12 @@ try:
         # Browser policy can deny deletion while reads continue to work.
         page.goto(BASE + '/#/history')
         expect(page.locator('.history-card')).to_have_count(1)
-        page.evaluate("window.originalRemove = Storage.prototype.removeItem; Storage.prototype.removeItem = function(){throw new Error('policy fixture')}")
+        page.evaluate("() => { window.originalRemove = Storage.prototype.removeItem; Storage.prototype.removeItem = function(){throw new Error('policy fixture')}; }")
         page.locator('#clear-history').click()
         expect(page.locator('#toast')).to_contain_text('拒绝清除存储')
         expect(page.locator('.history-card')).to_have_count(0)
         assert page.evaluate("JSON.parse(localStorage.getItem('harness-lab:v1')).sessions.length") == 1
-        page.evaluate('Storage.prototype.removeItem = window.originalRemove')
+        page.evaluate('() => { Storage.prototype.removeItem = window.originalRemove; }')
         page.reload()
         expect(page.locator('.history-card')).to_have_count(1)
         page.locator('#clear-history').click()
